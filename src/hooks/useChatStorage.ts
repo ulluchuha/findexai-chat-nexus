@@ -20,14 +20,21 @@ export interface ChatThread {
 
 export interface Settings {
   agent: string
+  provider: string
   model: string
   url?: string
   apiKeys: {
     openai?: string
     gemini?: string
+    claude?: string
     ollama?: string
+    deepseek?: string
+    openrouter?: string
   }
-  ollamaEndpoint?: string
+  endpoints: {
+    ollama?: string
+    openrouter?: string
+  }
 }
 
 export function useChatStorage() {
@@ -35,8 +42,10 @@ export function useChatStorage() {
   const [activeThreadId, setActiveThreadId] = useLocalStorage<string | undefined>('findex-active-thread', undefined)
   const [settings, setSettings] = useLocalStorage<Settings>('findex-settings', {
     agent: 'react',
-    model: 'openai-gpt4',
-    apiKeys: {}
+    provider: 'openai',
+    model: 'gpt-4.1',
+    apiKeys: {},
+    endpoints: {}
   })
 
   const getActiveThread = () => {

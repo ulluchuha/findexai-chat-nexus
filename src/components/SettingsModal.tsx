@@ -10,14 +10,21 @@ import { useToast } from '@/hooks/use-toast'
 
 interface Settings {
   agent: string
+  provider: string
   model: string
   url?: string
   apiKeys: {
     openai?: string
     gemini?: string
+    claude?: string
     ollama?: string
+    deepseek?: string
+    openrouter?: string
   }
-  ollamaEndpoint?: string
+  endpoints: {
+    ollama?: string
+    openrouter?: string
+  }
 }
 
 interface SettingsModalProps {
@@ -25,19 +32,69 @@ interface SettingsModalProps {
   onSettingsChange: (settings: Settings) => void
 }
 
-const AGENTS = [
-  { id: 'react', name: 'React Agent', requiresUrl: false, icon: '⚛️' },
-  { id: 'youtube', name: 'YouTube', requiresUrl: true, icon: '📺' },
-  { id: 'github', name: 'GitHub', requiresUrl: true, icon: '🐙' },
-  { id: 'website', name: 'Website', requiresUrl: true, icon: '🌐' },
-  { id: 'web-scroller', name: 'Web Scroller', requiresUrl: true, icon: '📜' },
-  { id: 'docs', name: 'Docs', requiresUrl: false, icon: '📚' },
-]
-
-const MODELS = [
-  { id: 'openai-gpt4', name: 'OpenAI (GPT-4.1)', provider: 'openai' },
-  { id: 'gemini', name: 'Gemini', provider: 'gemini' },
-  { id: 'ollama', name: 'Ollama', provider: 'ollama' },
+const PROVIDERS = [
+  {
+    id: 'openai',
+    name: 'OpenAI',
+    models: [
+      { id: 'gpt-4.1', name: 'GPT-4.1' },
+      { id: 'gpt-4o', name: 'GPT-4o' },
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
+      { id: 'o1-preview', name: 'o1 Preview' },
+      { id: 'o1-mini', name: 'o1 Mini' }
+    ]
+  },
+  {
+    id: 'gemini',
+    name: 'Google Gemini',
+    models: [
+      { id: 'flash-2.5', name: 'Flash 2.5' },
+      { id: 'flash-2.5-lite', name: 'Flash 2.5 Lite' },
+      { id: 'flash-2', name: 'Flash 2' },
+      { id: 'pro', name: 'Pro' },
+      { id: 'ultra', name: 'Ultra' }
+    ]
+  },
+  {
+    id: 'claude',
+    name: 'Anthropic Claude',
+    models: [
+      { id: 'opus-4', name: 'Claude 4 Opus' },
+      { id: 'sonnet-4', name: 'Claude 4 Sonnet' },
+      { id: 'haiku-3.5', name: 'Claude 3.5 Haiku' },
+      { id: 'sonnet-3.5', name: 'Claude 3.5 Sonnet' }
+    ]
+  },
+  {
+    id: 'ollama',
+    name: 'Ollama',
+    models: [
+      { id: 'llama3.3', name: 'Llama 3.3' },
+      { id: 'llama3.2', name: 'Llama 3.2' },
+      { id: 'mistral', name: 'Mistral' },
+      { id: 'codellama', name: 'Code Llama' },
+      { id: 'deepseek-coder', name: 'DeepSeek Coder' }
+    ]
+  },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    models: [
+      { id: 'v3', name: 'DeepSeek V3' },
+      { id: 'coder-v2', name: 'DeepSeek Coder V2' },
+      { id: 'reasoning', name: 'DeepSeek Reasoning' }
+    ]
+  },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    models: [
+      { id: 'auto', name: 'Auto (Best Available)' },
+      { id: 'claude-3-opus', name: 'Claude 3 Opus' },
+      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
+      { id: 'llama-70b', name: 'Llama 70B' }
+    ]
+  }
 ]
 
 export function SettingsModal({ settings, onSettingsChange }: SettingsModalProps) {
@@ -49,42 +106,35 @@ export function SettingsModal({ settings, onSettingsChange }: SettingsModalProps
     setLocalSettings(settings)
   }, [settings])
 
-  const selectedAgent = AGENTS.find(a => a.id === localSettings.agent) || AGENTS[0]
-  const selectedModel = MODELS.find(m => m.id === localSettings.model) || MODELS[0]
+  const selectedProvider = PROVIDERS.find(p => p.id === localSettings.provider) || PROVIDERS[0]
+  const selectedModel = selectedProvider.models.find(m => m.id === localSettings.model) || selectedProvider.models[0]
 
   const handleSave = () => {
-    // Validate required fields
-    if (selectedAgent.requiresUrl && !localSettings.url) {
-      toast({
-        title: "Missing URL",
-        description: `${selectedAgent.name} agent requires a URL.`,
-        variant: "destructive"
-      })
-      return
-    }
-
-    if (selectedModel.provider === 'openai' && !localSettings.apiKeys.openai) {
+    // Validate required API keys
+    const providerKey = localSettings.apiKeys[localSettings.provider as keyof typeof localSettings.apiKeys]
+    
+    if (!providerKey && localSettings.provider !== 'ollama') {
       toast({
         title: "Missing API Key",
-        description: "OpenAI API key is required for GPT-4.1.",
+        description: `${selectedProvider.name} API key is required.`,
         variant: "destructive"
       })
       return
     }
 
-    if (selectedModel.provider === 'gemini' && !localSettings.apiKeys.gemini) {
-      toast({
-        title: "Missing API Key",
-        description: "Gemini API key is required.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    if (selectedModel.provider === 'ollama' && !localSettings.ollamaEndpoint) {
+    if (localSettings.provider === 'ollama' && !localSettings.endpoints.ollama) {
       toast({
         title: "Missing Endpoint",
         description: "Ollama endpoint URL is required.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (localSettings.provider === 'openrouter' && !localSettings.endpoints.openrouter) {
+      toast({
+        title: "Missing Endpoint",
+        description: "OpenRouter endpoint URL is required.",
         variant: "destructive"
       })
       return
@@ -101,8 +151,10 @@ export function SettingsModal({ settings, onSettingsChange }: SettingsModalProps
   const handleClearAll = () => {
     const clearedSettings: Settings = {
       agent: 'react',
-      model: 'openai-gpt4',
+      provider: 'openai',
+      model: 'gpt-4.1',
       apiKeys: {},
+      endpoints: {}
     }
     setLocalSettings(clearedSettings)
     onSettingsChange(clearedSettings)
@@ -123,6 +175,13 @@ export function SettingsModal({ settings, onSettingsChange }: SettingsModalProps
     }))
   }
 
+  const updateEndpoint = (provider: string, value: string) => {
+    setLocalSettings(prev => ({
+      ...prev,
+      endpoints: { ...prev.endpoints, [provider]: value }
+    }))
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -132,72 +191,40 @@ export function SettingsModal({ settings, onSettingsChange }: SettingsModalProps
       </DialogTrigger>
       <DialogContent className="glass-card max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="gradient-text">AI Assistant Settings</DialogTitle>
+          <DialogTitle className="gradient-text">Model & API Settings</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Agent Selection */}
+          {/* Provider Selection */}
           <div className="space-y-2">
-            <Label htmlFor="agent">AI Agent</Label>
+            <Label htmlFor="provider">AI Provider</Label>
             <Select
-              value={localSettings.agent}
-              onValueChange={(value) => updateSetting('agent', value)}
+              value={localSettings.provider}
+              onValueChange={(value) => {
+                updateSetting('provider', value)
+                // Reset to first model of new provider
+                const newProvider = PROVIDERS.find(p => p.id === value)
+                if (newProvider) {
+                  updateSetting('model', newProvider.models[0].id)
+                }
+              }}
             >
               <SelectTrigger className="glass-input">
-                <SelectValue placeholder="Select an agent" />
+                <SelectValue placeholder="Select a provider" />
               </SelectTrigger>
               <SelectContent className="glass-card">
-                {AGENTS.map((agent) => (
-                  <SelectItem key={agent.id} value={agent.id}>
-                    <div className="flex items-center gap-2">
-                      <span>{agent.icon}</span>
-                      <span>{agent.name}</span>
-                    </div>
+                {PROVIDERS.map((provider) => (
+                  <SelectItem key={provider.id} value={provider.id}>
+                    {provider.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* URL Input (conditional) */}
-          {selectedAgent.requiresUrl && (
-            <div className="space-y-2">
-              <Label htmlFor="url">
-                <Link className="w-4 h-4 inline mr-1" />
-                URL for {selectedAgent.name}
-              </Label>
-              <Input
-                id="url"
-                value={localSettings.url || ''}
-                onChange={(e) => updateSetting('url', e.target.value)}
-                placeholder="https://..."
-                className="glass-input"
-              />
-            </div>
-          )}
-
-          {/* Document Upload (for Docs agent) */}
-          {localSettings.agent === 'docs' && (
-            <div className="space-y-2">
-              <Label>
-                <FileText className="w-4 h-4 inline mr-1" />
-                Document Upload
-              </Label>
-              <div className="glass-input p-4 text-center border-dashed">
-                <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  Drag and drop files or click to browse
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Supports PDF, TXT, DOCX, MD
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* Model Selection */}
           <div className="space-y-2">
-            <Label htmlFor="model">Language Model</Label>
+            <Label htmlFor="model">Model</Label>
             <Select
               value={localSettings.model}
               onValueChange={(value) => updateSetting('model', value)}
@@ -206,7 +233,7 @@ export function SettingsModal({ settings, onSettingsChange }: SettingsModalProps
                 <SelectValue placeholder="Select a model" />
               </SelectTrigger>
               <SelectContent className="glass-card">
-                {MODELS.map((model) => (
+                {selectedProvider.models.map((model) => (
                   <SelectItem key={model.id} value={model.id}>
                     {model.name}
                   </SelectItem>
@@ -215,43 +242,51 @@ export function SettingsModal({ settings, onSettingsChange }: SettingsModalProps
             </Select>
           </div>
 
-          {/* API Key Inputs */}
-          {selectedModel.provider === 'openai' && (
+          {/* API Key Input */}
+          {localSettings.provider !== 'ollama' && (
             <div className="space-y-2">
-              <Label htmlFor="openai-key">OpenAI API Key</Label>
+              <Label htmlFor={`${localSettings.provider}-key`}>
+                {selectedProvider.name} API Key
+              </Label>
               <Input
-                id="openai-key"
+                id={`${localSettings.provider}-key`}
                 type="password"
-                value={localSettings.apiKeys.openai || ''}
-                onChange={(e) => updateApiKey('openai', e.target.value)}
-                placeholder="sk-..."
+                value={localSettings.apiKeys[localSettings.provider as keyof typeof localSettings.apiKeys] || ''}
+                onChange={(e) => updateApiKey(localSettings.provider, e.target.value)}
+                placeholder={
+                  localSettings.provider === 'openai' ? 'sk-...' :
+                  localSettings.provider === 'claude' ? 'sk-ant-...' :
+                  localSettings.provider === 'gemini' ? 'AI...' :
+                  localSettings.provider === 'deepseek' ? 'sk-...' :
+                  localSettings.provider === 'openrouter' ? 'sk-or-...' : 'API Key'
+                }
                 className="glass-input"
               />
             </div>
           )}
 
-          {selectedModel.provider === 'gemini' && (
-            <div className="space-y-2">
-              <Label htmlFor="gemini-key">Gemini API Key</Label>
-              <Input
-                id="gemini-key"
-                type="password"
-                value={localSettings.apiKeys.gemini || ''}
-                onChange={(e) => updateApiKey('gemini', e.target.value)}
-                placeholder="AI..."
-                className="glass-input"
-              />
-            </div>
-          )}
-
-          {selectedModel.provider === 'ollama' && (
+          {/* Endpoint Inputs */}
+          {localSettings.provider === 'ollama' && (
             <div className="space-y-2">
               <Label htmlFor="ollama-endpoint">Ollama Endpoint</Label>
               <Input
                 id="ollama-endpoint"
-                value={localSettings.ollamaEndpoint || ''}
-                onChange={(e) => updateSetting('ollamaEndpoint', e.target.value)}
+                value={localSettings.endpoints.ollama || ''}
+                onChange={(e) => updateEndpoint('ollama', e.target.value)}
                 placeholder="http://localhost:11434"
+                className="glass-input"
+              />
+            </div>
+          )}
+
+          {localSettings.provider === 'openrouter' && (
+            <div className="space-y-2">
+              <Label htmlFor="openrouter-endpoint">OpenRouter Endpoint (Optional)</Label>
+              <Input
+                id="openrouter-endpoint"
+                value={localSettings.endpoints.openrouter || ''}
+                onChange={(e) => updateEndpoint('openrouter', e.target.value)}
+                placeholder="https://openrouter.ai/api/v1"
                 className="glass-input"
               />
             </div>

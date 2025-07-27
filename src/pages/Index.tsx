@@ -57,7 +57,7 @@ function ChatApp() {
       // Simulate API call to FindexAI backend
       await new Promise(resolve => setTimeout(resolve, 1500))
       
-      const aiResponse = `I understand you're asking about "${content}". This would normally be processed by the ${agent} agent${url ? ` using ${url}` : ''} and return a comprehensive response based on the ${settings.model} model.`
+      const aiResponse = `I understand you're asking about "${content}". This would normally be processed by the ${agent} agent${url ? ` using ${url}` : ''} and return a comprehensive response based on the ${settings.provider} ${settings.model} model.`
 
       const aiMessage: Message = {
         id: `msg-${Date.now()}-ai`,
@@ -148,6 +148,8 @@ function ChatApp() {
             currentUrl={settings.url}
             messages={messages}
             isLoading={isLoading}
+            onAgentChange={(agent) => setSettings(prev => ({ ...prev, agent }))}
+            onUrlChange={(url) => setSettings(prev => ({ ...prev, url }))}
           />
         </div>
       </div>

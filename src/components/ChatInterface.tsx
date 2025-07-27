@@ -3,6 +3,7 @@ import { Send, Bot, User, Copy, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
+import { AgentSelector } from '@/components/AgentSelector'
 
 interface Message {
   id: string
@@ -19,6 +20,8 @@ interface ChatInterfaceProps {
   currentUrl?: string
   messages: Message[]
   isLoading: boolean
+  onAgentChange: (agent: string) => void
+  onUrlChange: (url: string) => void
 }
 
 export function ChatInterface({ 
@@ -26,7 +29,9 @@ export function ChatInterface({
   currentAgent, 
   currentUrl, 
   messages, 
-  isLoading 
+  isLoading,
+  onAgentChange,
+  onUrlChange
 }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -186,8 +191,17 @@ export function ChatInterface({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 border-t bg-background/80 backdrop-blur-sm">
+      {/* Agent Selector and Input Area */}
+      <div className="p-4 border-t bg-background/80 backdrop-blur-sm space-y-3">
+        {/* Agent Selector */}
+        <AgentSelector
+          agent={currentAgent}
+          url={currentUrl}
+          onAgentChange={onAgentChange}
+          onUrlChange={onUrlChange}
+        />
+        
+        {/* Message Input */}
         <div className="flex gap-2 items-end">
           <div className="flex-1">
             <Textarea
@@ -213,12 +227,6 @@ export function ChatInterface({
             )}
           </Button>
         </div>
-        {currentAgent !== 'React Agent' && currentUrl && (
-          <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <span>Using {currentAgent} agent with:</span>
-            <span className="text-accent-teal font-mono">{currentUrl}</span>
-          </div>
-        )}
       </div>
     </div>
   )
