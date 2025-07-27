@@ -61,7 +61,26 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// FindexAI accent colors
+				'accent-teal': 'hsl(var(--accent-teal))',
+				'accent-orange': 'hsl(var(--accent-orange))',
+				'accent-ocean': 'hsl(var(--accent-ocean))',
+				// Status colors
+				success: 'hsl(var(--success))',
+				warning: 'hsl(var(--warning))'
+			},
+			fontFamily: {
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+				mono: ['Fira Code', 'monospace']
+			},
+			backgroundImage: {
+				'accent-gradient': 'var(--accent-gradient)',
+				'glass-gradient': 'var(--glass-gradient)'
+			},
+			boxShadow: {
+				'glass': 'var(--shadow-glass)',
+				'elevated': 'var(--shadow-elevated)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
